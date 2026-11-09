@@ -2,12 +2,12 @@
 name: Build HandyPairMatcher APK
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "HandyPairMatcher_Android_Build_Ready.zip"
       - ".github/workflows/build-apk.yml"
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,8 +20,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Android project
-        run: unzip -q HandyPairMatcher_Android_Build_Ready.zip
+      - name: Extract Android project and fix Kotlin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          unzip -q HandyPairMatcher_Android_Build_Ready.zip
+
+          KOTLIN_FILE="HandyPairMatcherAndroid/app/src/main/java/com/example/handypairmatcher/MainActivity.kt"
+
+          test -f "$KOTLIN_FILE"
+
+          # Add missing horizontalScroll import only if needed
+          if ! grep -q '^import androidx.compose.foundation.horizontalScroll$' "$KOTLIN_FILE"; then
+            sed -i '/^package /a import androidx.compose.foundation.horizontalScroll' "$KOTLIN_FILE"
+          fi
+
+          echo "Kotlin import fix applied."
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -45,7 +60,8 @@ jobs:
 
       - name: Build debug APK
         working-directory: HandyPairMatcherAndroid
-        run: gradle --no-daemon :app:assembleDebug
+        run: |
+          gradle --no-daemon :app:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -53,4 +69,5 @@ jobs:
           name: HandyPairMatcher-debug-apk
           path: HandyPairMatcherAndroid/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
           
