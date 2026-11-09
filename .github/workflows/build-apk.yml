@@ -1,12 +1,8 @@
 
-name: Build HandyPairMatcher APK
-
-on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "HandyPairMatcher_Android_Build_Ready.zip"
+- name: Extract Android project and fix Kotlin
+  shell: bash
+  run: |
+    unzip -q HandyPairMatcher_Android_Scanner_v02.zip
       - ".github/workflows/build-apk.yml"
 
 permissions:
