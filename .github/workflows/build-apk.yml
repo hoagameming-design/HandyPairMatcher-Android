@@ -2,12 +2,12 @@
 name: Build HandyPairMatcher APK
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - "HandyPairMatcher_Android_Build_Ready.zip"
       - ".github/workflows/build-apk.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -21,8 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract Android project
-        run: |
-          unzip -q HandyPairMatcher_Android_Build_Ready.zip
+        run: unzip -q HandyPairMatcher_Android_Build_Ready.zip
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -30,9 +29,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
       - name: Install Android SDK 35
         run: |
-          echo "y" | sdkmanager --licenses > /dev/null || true
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Setup Gradle
@@ -40,7 +43,7 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
-      - name: Build APK
+      - name: Build debug APK
         working-directory: HandyPairMatcherAndroid
         run: gradle --no-daemon :app:assembleDebug
 
